@@ -15,47 +15,55 @@ pub fn init_script(shell: &str) -> String {
 fn zsh_hook(gig_bin: &str) -> String {
     format!(
         r#"# gig shell integration (zsh)
-_gig_completions() {{
-    local cmd="${{words[1]}}"
-    local -a args
-    args=(${{words[2,-1]}})
 
-    local IFS=$'\n'
-    local -a lines
-    lines=($("{gig}" complete "$cmd" "${{args[@]}}" 2>/dev/null))
+# Save the original tab handler
+if [[ -z "$_gig_original_widget" ]]; then
+    _gig_original_widget="expand-or-complete"
+fi
 
-    local -a values descriptions
-    local line
-    for line in "${{lines[@]}}"; do
-        local value="${{line%%	*}}"
-        local desc="${{line#*	}}"
-        values+=("$value")
-        if [[ "$value" != "$desc" ]]; then
-            descriptions+=("$value -- $desc")
-        else
-            descriptions+=("$value")
-        fi
-    done
+_gig_fzf_complete() {{
+    local cmd
+    local -a tokens
+    tokens=(${{(z)LBUFFER}})
+    cmd="${{tokens[1]}}"
 
-    if (( ${{#values}} > 0 )); then
-        local -a displays
-        displays=("${{descriptions[@]}}")
-        compadd -l -d displays -a values
-    fi
-}}
-
-# Register for known commands
-_gig_register() {{
     local specs_dir="${{GIG_SPECS_DIR:-$HOME/.config/gig/specs}}"
-    if [[ -d "$specs_dir" ]]; then
-        for spec_file in "$specs_dir"/*.toml; do
-            local cmd=$(basename "$spec_file" .toml)
-            compdef _gig_completions "$cmd"
-        done
+
+    # If no gig spec for this command, fall back to default
+    if [[ ! -f "$specs_dir/$cmd.toml" ]]; then
+        zle "${{_gig_original_widget}}"
+        return
+    fi
+
+    local -a args
+    args=(${{tokens[2,-1]}})
+
+    # Estimate cursor column for dropdown positioning
+    # Use LBUFFER length + small offset for prompt (safe fallback)
+    local indent=$((${{#LBUFFER}} + 2))
+
+    # Use a temp file for the result. crossterm reads /dev/tty directly (use-dev-tty feature).
+    local tmpfile=$(mktemp /tmp/gig-pick.XXXXXX)
+    "{gig}" pick --output "$tmpfile" --indent "$indent" "$cmd" "${{args[@]}}" >/dev/tty 2>/dev/tty
+    local selected=$(<"$tmpfile")
+    rm -f "$tmpfile"
+
+    if [[ -n "$selected" ]]; then
+        # Remove the partial word being typed
+        local partial="${{tokens[-1]}}"
+        if (( ${{#tokens}} > 1 )) && [[ "$LBUFFER" != *" " ]]; then
+            LBUFFER="${{LBUFFER%$partial}}$selected "
+        else
+            LBUFFER="${{LBUFFER}}$selected "
+        fi
+        zle reset-prompt
+    else
+        zle reset-prompt
     fi
 }}
 
-_gig_register
+zle -N _gig_fzf_complete
+bindkey '^I' _gig_fzf_complete
 "#,
         gig = gig_bin
     )
@@ -102,12 +110,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn zsh_script_contains_compdef() {
+    fn zsh_script_contains_pick_widget() {
         let script = init_script("zsh");
-        assert!(script.contains("compdef"));
-        assert!(script.contains("_gig_completions"));
-        assert!(script.contains("complete"));
-        assert!(script.contains("compadd -l -d"));
+        assert!(script.contains("_gig_fzf_complete"));
+        assert!(script.contains("pick --output"));
+        assert!(script.contains("bindkey"));
+        assert!(script.contains("/dev/tty"));
+        assert!(script.contains("mktemp"));
     }
 
     #[test]
