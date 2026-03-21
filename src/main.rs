@@ -1,3 +1,5 @@
+mod spec;
+
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]

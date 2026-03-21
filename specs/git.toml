@@ -1,0 +1,67 @@
+name = "git"
+description = "The stupid content tracker"
+
+[[options]]
+name = "--version"
+description = "Prints the Git suite version"
+
+[[options]]
+name = "--help"
+description = "Prints the synopsis and a list of the most commonly used commands"
+
+[[options]]
+name = "-C"
+description = "Run as if git was started in <path>"
+arg = "path"
+
+[[subcommands]]
+name = "clone"
+description = "Clone a repository into a new directory"
+
+[[subcommands.options]]
+name = "--bare"
+description = "Make a bare Git repository"
+
+[[subcommands.options]]
+name = "--depth"
+description = "Create a shallow clone with a history truncated to the specified number of commits"
+arg = "depth"
+
+[[subcommands.options]]
+name = "--branch"
+description = "Point to a specific branch"
+arg = "branch"
+short = "-b"
+
+[[subcommands]]
+name = "commit"
+description = "Record changes to the repository"
+
+[[subcommands.options]]
+name = "--message"
+description = "Use the given message as the commit message"
+arg = "message"
+short = "-m"
+
+[[subcommands.options]]
+name = "--all"
+description = "Stage all modified and deleted files"
+short = "-a"
+
+[[subcommands.options]]
+name = "--amend"
+description = "Amend the previous commit"
+
+[[subcommands]]
+name = "push"
+description = "Update remote refs along with associated objects"
+
+[[subcommands.options]]
+name = "--force"
+description = "Force push"
+short = "-f"
+
+[[subcommands.options]]
+name = "--set-upstream"
+description = "Set upstream for the current branch"
+short = "-u"
