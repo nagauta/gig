@@ -1,0 +1,9 @@
+[package]
+name = "fig"
+version = "0.1.0"
+edition = "2021"
+description = "Terminal autocomplete for any CLI tool"
+license = "MIT"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
