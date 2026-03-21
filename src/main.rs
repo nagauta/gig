@@ -6,7 +6,11 @@ mod spec;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "gig", version, about = "Terminal autocomplete for any CLI tool")]
+#[command(
+    name = "gig",
+    version,
+    about = "Terminal autocomplete for any CLI tool"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -75,7 +79,9 @@ fn main() {
                     let bundled = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("specs");
                     let target = complete::default_specs_dir();
                     match installer::install_specs(&bundled, &target) {
-                        Ok(n) => println!("Installed {} completion specs to {}", n, target.display()),
+                        Ok(n) => {
+                            println!("Installed {} completion specs to {}", n, target.display())
+                        }
                         Err(e) => eprintln!("Failed to install specs: {}", e),
                     }
                 }

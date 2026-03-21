@@ -41,7 +41,10 @@ pub fn default_specs_dir() -> PathBuf {
         return PathBuf::from(config);
     }
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join(".config").join("gig").join("specs")
+    PathBuf::from(home)
+        .join(".config")
+        .join("gig")
+        .join("specs")
 }
 
 #[cfg(test)]
