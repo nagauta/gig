@@ -1,0 +1,170 @@
+name = "docker"
+description = "A self-sufficient runtime for containers"
+
+[[options]]
+name = "--version"
+description = "Print version information"
+
+[[options]]
+name = "--help"
+description = "Print usage"
+
+[[subcommands]]
+name = "run"
+description = "Create and run a new container from an image"
+
+[[subcommands.options]]
+name = "--detach"
+description = "Run container in background"
+short = "-d"
+
+[[subcommands.options]]
+name = "--name"
+description = "Assign a name to the container"
+arg = "name"
+
+[[subcommands.options]]
+name = "--publish"
+description = "Publish a container's port(s) to the host"
+arg = "hostPort:containerPort"
+short = "-p"
+
+[[subcommands.options]]
+name = "--env"
+description = "Set environment variables"
+arg = "KEY=VALUE"
+short = "-e"
+
+[[subcommands.options]]
+name = "--volume"
+description = "Bind mount a volume"
+arg = "src:dst"
+short = "-v"
+
+[[subcommands.options]]
+name = "--rm"
+description = "Automatically remove the container when it exits"
+
+[[subcommands.options]]
+name = "--interactive"
+description = "Keep STDIN open"
+short = "-i"
+
+[[subcommands.options]]
+name = "--tty"
+description = "Allocate a pseudo-TTY"
+short = "-t"
+
+[[subcommands]]
+name = "build"
+description = "Build an image from a Dockerfile"
+
+[[subcommands.options]]
+name = "--tag"
+description = "Name and optionally a tag (name:tag)"
+arg = "name:tag"
+short = "-t"
+
+[[subcommands.options]]
+name = "--file"
+description = "Name of the Dockerfile"
+arg = "Dockerfile"
+short = "-f"
+
+[[subcommands.options]]
+name = "--no-cache"
+description = "Do not use cache when building the image"
+
+[[subcommands.options]]
+name = "--platform"
+description = "Set platform if server is multi-platform capable"
+arg = "platform"
+
+[[subcommands]]
+name = "ps"
+description = "List containers"
+
+[[subcommands.options]]
+name = "--all"
+description = "Show all containers (default shows just running)"
+short = "-a"
+
+[[subcommands.options]]
+name = "--quiet"
+description = "Only display container IDs"
+short = "-q"
+
+[[subcommands]]
+name = "images"
+description = "List images"
+
+[[subcommands.options]]
+name = "--all"
+description = "Show all images"
+short = "-a"
+
+[[subcommands.options]]
+name = "--quiet"
+description = "Only show image IDs"
+short = "-q"
+
+[[subcommands]]
+name = "pull"
+description = "Download an image from a registry"
+
+[[subcommands.options]]
+name = "--platform"
+description = "Set platform"
+arg = "platform"
+
+[[subcommands]]
+name = "push"
+description = "Upload an image to a registry"
+
+[[subcommands]]
+name = "exec"
+description = "Execute a command in a running container"
+
+[[subcommands.options]]
+name = "--detach"
+description = "Run command in the background"
+short = "-d"
+
+[[subcommands.options]]
+name = "--interactive"
+description = "Keep STDIN open"
+short = "-i"
+
+[[subcommands.options]]
+name = "--tty"
+description = "Allocate a pseudo-TTY"
+short = "-t"
+
+[[subcommands]]
+name = "stop"
+description = "Stop one or more running containers"
+
+[[subcommands.options]]
+name = "--time"
+description = "Seconds to wait before killing the container"
+arg = "seconds"
+short = "-t"
+
+[[subcommands]]
+name = "rm"
+description = "Remove one or more containers"
+
+[[subcommands.options]]
+name = "--force"
+description = "Force the removal of a running container"
+short = "-f"
+
+[[subcommands]]
+name = "compose"
+description = "Docker Compose"
+
+[[subcommands.options]]
+name = "--file"
+description = "Compose configuration file"
+arg = "file"
+short = "-f"

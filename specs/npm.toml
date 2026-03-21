@@ -1,0 +1,124 @@
+name = "npm"
+description = "Node package manager"
+
+[[options]]
+name = "--version"
+description = "Print npm version"
+short = "-v"
+
+[[options]]
+name = "--help"
+description = "Get help on npm"
+short = "-h"
+
+[[subcommands]]
+name = "install"
+description = "Install a package"
+
+[[subcommands.options]]
+name = "--save-dev"
+description = "Save as devDependency"
+short = "-D"
+
+[[subcommands.options]]
+name = "--save-exact"
+description = "Save exact version"
+short = "-E"
+
+[[subcommands.options]]
+name = "--global"
+description = "Install globally"
+short = "-g"
+
+[[subcommands.options]]
+name = "--legacy-peer-deps"
+description = "Ignore peerDependency conflicts"
+
+[[subcommands]]
+name = "run"
+description = "Run a script defined in package.json"
+
+[[subcommands]]
+name = "test"
+description = "Run the test script"
+
+[[subcommands]]
+name = "start"
+description = "Run the start script"
+
+[[subcommands]]
+name = "init"
+description = "Create a package.json file"
+
+[[subcommands.options]]
+name = "--yes"
+description = "Skip the questionnaire"
+short = "-y"
+
+[[subcommands]]
+name = "publish"
+description = "Publish a package to the registry"
+
+[[subcommands.options]]
+name = "--access"
+description = "Set access level"
+arg = "public|restricted"
+
+[[subcommands.options]]
+name = "--tag"
+description = "Register the package with the given tag"
+arg = "tag"
+
+[[subcommands]]
+name = "uninstall"
+description = "Remove a package"
+
+[[subcommands.options]]
+name = "--save-dev"
+description = "Remove from devDependencies"
+short = "-D"
+
+[[subcommands.options]]
+name = "--global"
+description = "Remove global package"
+short = "-g"
+
+[[subcommands]]
+name = "update"
+description = "Update packages"
+
+[[subcommands.options]]
+name = "--global"
+description = "Update global packages"
+short = "-g"
+
+[[subcommands]]
+name = "outdated"
+description = "Check for outdated packages"
+
+[[subcommands.options]]
+name = "--global"
+description = "Check global packages"
+short = "-g"
+
+[[subcommands]]
+name = "list"
+description = "List installed packages"
+
+[[subcommands.options]]
+name = "--global"
+description = "List global packages"
+short = "-g"
+
+[[subcommands.options]]
+name = "--depth"
+description = "Max display depth"
+arg = "depth"
+
+[[subcommands]]
+name = "ci"
+description = "Clean install from package-lock.json"
+
+[[subcommands]]
+name = "cache"
+description = "Manipulate packages cache"
