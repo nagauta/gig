@@ -2,6 +2,7 @@ mod complete;
 mod installer;
 mod shell;
 mod spec;
+mod tui;
 
 use clap::{Parser, Subcommand};
 
@@ -35,6 +36,19 @@ enum Commands {
         /// The arguments typed so far
         args: Vec<String>,
     },
+    /// Interactive completion picker (replaces fzf)
+    Pick {
+        /// File to write the selected value to (avoids stdout capture issues)
+        #[arg(long)]
+        output: String,
+        /// Column offset for dropdown positioning
+        #[arg(long, default_value_t = 0)]
+        indent: u16,
+        /// The command to complete for
+        command: String,
+        /// The arguments typed so far
+        args: Vec<String>,
+    },
 }
 
 #[derive(Clone, clap::ValueEnum)]
@@ -63,6 +77,26 @@ fn main() {
                 let output = complete::generate_completions(spec, &arg_refs);
                 if !output.is_empty() {
                     println!("{}", output);
+                }
+            }
+        }
+        Some(Commands::Pick {
+            output,
+            indent,
+            command,
+            args,
+        }) => {
+            let specs_dir = complete::default_specs_dir();
+            let specs = complete::load_specs(&specs_dir);
+            if let Some(spec) = complete::find_spec(&specs, &command) {
+                let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+                let completions = spec.completions(&arg_refs);
+                match tui::run(completions, indent) {
+                    Ok(Some(value)) => {
+                        let _ = std::fs::write(&output, &value);
+                    }
+                    Ok(None) => {}
+                    Err(e) => eprintln!("gig: picker error: {:?}", e),
                 }
             }
         }
