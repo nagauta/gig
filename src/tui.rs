@@ -19,8 +19,6 @@ const DESC_BG: Color = Color::Rgb(38, 38, 54); // description bar bg
 const ICON_COLOR: Color = Color::Rgb(180, 130, 255); // purple icon
 
 const MAX_VISIBLE: u16 = 8;
-const ICON_WIDTH: usize = 3; // " $ "
-const PADDING: usize = 2; // right padding
 
 struct App {
     items: Vec<Completion>,
@@ -29,7 +27,6 @@ struct App {
     selected: usize,
     scroll_offset: usize,
     indent: u16,
-    content_width: u16,
 }
 
 struct FilteredItem {
@@ -38,27 +35,13 @@ struct FilteredItem {
 }
 
 impl App {
-    fn new(items: Vec<Completion>, indent: u16, term_width: u16) -> Self {
+    fn new(items: Vec<Completion>, indent: u16) -> Self {
         let filtered = (0..items.len())
             .map(|i| FilteredItem {
                 index: i,
                 match_positions: vec![],
             })
             .collect();
-
-        // Calculate content width from items
-        let max_line_width = items
-            .iter()
-            .map(|item| {
-                let desc_len = item.description.as_ref().map_or(0, |d| d.len() + 2);
-                ICON_WIDTH + item.value.len() + desc_len + PADDING
-            })
-            .max()
-            .unwrap_or(20);
-
-        let content_width = (max_line_width as u16)
-            .max(20)
-            .min(term_width.saturating_sub(indent));
 
         Self {
             items,
@@ -67,7 +50,6 @@ impl App {
             selected: 0,
             scroll_offset: 0,
             indent,
-            content_width,
         }
     }
 
@@ -168,7 +150,7 @@ pub fn run(items: Vec<Completion>, indent: u16) -> io::Result<Option<String>> {
     let (term_width, _) = crossterm::terminal::size()?;
     let indent = indent.min(term_width.saturating_sub(20));
 
-    let mut app = App::new(items, indent, term_width);
+    let mut app = App::new(items, indent);
 
     enable_raw_mode()?;
     // Move cursor to next line so dropdown appears below the input
@@ -247,11 +229,8 @@ fn draw(f: &mut Frame, app: &App) {
         .min(MAX_VISIBLE)
         .min(area.height.saturating_sub(1));
 
-    let chunks = Layout::vertical([
-        Constraint::Length(list_height),
-        Constraint::Length(1),
-    ])
-    .split(area);
+    let chunks =
+        Layout::vertical([Constraint::Length(list_height), Constraint::Length(1)]).split(area);
 
     render_list(f, app, chunks[0]);
     render_description(f, app, chunks[1]);
@@ -326,10 +305,7 @@ fn render_description(f: &mut Frame, app: &App, area: Rect) {
     let line = Line::from(vec![
         indent_pad(app.indent),
         Span::styled("│", Style::default().fg(BORDER_COLOR)),
-        Span::styled(
-            format!(" {}", desc),
-            Style::default().fg(TEXT_DIM).italic(),
-        ),
+        Span::styled(format!(" {}", desc), Style::default().fg(TEXT_DIM).italic()),
     ]);
 
     f.render_widget(
@@ -376,7 +352,7 @@ mod tests {
                 description: None,
             },
         ];
-        let mut app = App::new(items, 0, 80);
+        let mut app = App::new(items, 0);
         app.query = "c".to_string();
         app.filter();
         assert_eq!(app.filtered.len(), 2);
@@ -394,7 +370,7 @@ mod tests {
                 description: None,
             },
         ];
-        let mut app = App::new(items, 0, 80);
+        let mut app = App::new(items, 0);
         assert_eq!(app.selected, 0);
         app.move_down();
         assert_eq!(app.selected, 1);
@@ -402,19 +378,5 @@ mod tests {
         assert_eq!(app.selected, 0);
         app.move_up();
         assert_eq!(app.selected, 1);
-    }
-
-    #[test]
-    fn content_width_is_compact() {
-        let items = vec![
-            Completion {
-                value: "push".to_string(),
-                description: Some("Update remote".to_string()),
-            },
-        ];
-        let app = App::new(items, 0, 120);
-        // Should be compact, not full terminal width
-        assert!(app.content_width < 40);
-        assert!(app.content_width >= 20);
     }
 }

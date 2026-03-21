@@ -80,7 +80,12 @@ fn main() {
                 }
             }
         }
-        Some(Commands::Pick { output, indent, command, args }) => {
+        Some(Commands::Pick {
+            output,
+            indent,
+            command,
+            args,
+        }) => {
             let specs_dir = complete::default_specs_dir();
             let specs = complete::load_specs(&specs_dir);
             if let Some(spec) = complete::find_spec(&specs, &command) {
