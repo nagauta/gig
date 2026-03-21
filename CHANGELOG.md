@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4](https://github.com/nagauta/gig/compare/v0.1.3...v0.1.4) - 2026-03-21
+
+### Fixed
+
+- *(ci)* run release-pr after release to prevent duplicate PRs
+
+### Other
+
+- clarify PR template instructions to include both title and body in English
+
 ## [0.1.3](https://github.com/nagauta/gig/compare/v0.1.2...v0.1.3) - 2026-03-21
 
 ### Added
