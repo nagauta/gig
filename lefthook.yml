@@ -1,0 +1,6 @@
+pre-push:
+  commands:
+    fmt:
+      run: cargo fmt -- --check
+    lint:
+      run: cargo clippy -- -D warnings

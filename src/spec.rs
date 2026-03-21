@@ -50,7 +50,7 @@ impl Spec {
                         description: s.description.clone(),
                     })
                     .collect();
-                result.extend(self.options.iter().flat_map(|o| opt_completions(o)));
+                result.extend(self.options.iter().flat_map(opt_completions));
                 result
             }
             [partial] => {
@@ -67,7 +67,7 @@ impl Spec {
                 result.extend(
                     self.options
                         .iter()
-                        .flat_map(|o| opt_completions(o))
+                        .flat_map(opt_completions)
                         .filter(|c| c.value.starts_with(partial)),
                 );
                 result
@@ -102,7 +102,7 @@ fn sub_completions(sub: &Subcommand, args: &[&str]) -> Vec<Completion> {
     let partial = args.last().copied().unwrap_or("");
     sub.options
         .iter()
-        .flat_map(|o| opt_completions(o))
+        .flat_map(opt_completions)
         .filter(|c| c.value.starts_with(partial))
         .collect()
 }
