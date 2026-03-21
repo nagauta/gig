@@ -1,3 +1,5 @@
+mod complete;
+mod shell;
 mod spec;
 
 use clap::{Parser, Subcommand};
@@ -11,7 +13,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Initialize gig for your shell
+    /// Initialize gig for your shell (prints hook script to stdout)
     Init {
         /// Shell to initialize (bash, zsh)
         #[arg(value_enum)]
@@ -21,6 +23,13 @@ enum Commands {
     Install,
     /// Remove gig from your shell config
     Uninstall,
+    /// Generate completions for a command (used internally by shell hook)
+    Complete {
+        /// The command to complete for
+        command: String,
+        /// The arguments typed so far
+        args: Vec<String>,
+    },
 }
 
 #[derive(Clone, clap::ValueEnum)]
@@ -39,8 +48,18 @@ fn main() {
                 Some(Shell::Zsh) => "zsh",
                 None => detect_shell(),
             };
-            println!("Initializing gig for {}...", shell_name);
-            // TODO: Output shell hook script
+            print!("{}", shell::init_script(shell_name));
+        }
+        Some(Commands::Complete { command, args }) => {
+            let specs_dir = complete::default_specs_dir();
+            let specs = complete::load_specs(&specs_dir);
+            if let Some(spec) = complete::find_spec(&specs, &command) {
+                let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+                let output = complete::generate_completions(spec, &arg_refs);
+                if !output.is_empty() {
+                    println!("{}", output);
+                }
+            }
         }
         Some(Commands::Install) => {
             println!("Installing gig...");
