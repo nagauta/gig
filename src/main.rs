@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "fig", version, about = "Terminal autocomplete for any CLI tool")]
+#[command(name = "gig", version, about = "Terminal autocomplete for any CLI tool")]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -9,15 +9,15 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Initialize fig for your shell
+    /// Initialize gig for your shell
     Init {
         /// Shell to initialize (bash, zsh)
         #[arg(value_enum)]
         shell: Option<Shell>,
     },
-    /// Install fig into your shell config
+    /// Install gig into your shell config
     Install,
-    /// Remove fig from your shell config
+    /// Remove gig from your shell config
     Uninstall,
 }
 
@@ -37,20 +37,20 @@ fn main() {
                 Some(Shell::Zsh) => "zsh",
                 None => detect_shell(),
             };
-            println!("Initializing fig for {}...", shell_name);
+            println!("Initializing gig for {}...", shell_name);
             // TODO: Output shell hook script
         }
         Some(Commands::Install) => {
-            println!("Installing fig...");
+            println!("Installing gig...");
             // TODO: Add hook to shell config
         }
         Some(Commands::Uninstall) => {
-            println!("Uninstalling fig...");
+            println!("Uninstalling gig...");
             // TODO: Remove hook from shell config
         }
         None => {
-            println!("fig v{}", env!("CARGO_PKG_VERSION"));
-            println!("Run `fig --help` for usage.");
+            println!("gig v{}", env!("CARGO_PKG_VERSION"));
+            println!("Run `gig --help` for usage.");
         }
     }
 }

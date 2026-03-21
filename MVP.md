@@ -1,4 +1,4 @@
-# fig CLI — MVP定義
+# gig CLI — MVP定義
 
 ## コンセプト
 
@@ -44,7 +44,7 @@
 ### M1: プロジェクト初期化
 
 - Cargoプロジェクト作成
-- CLIスケルトン（`fig init`, `fig --version`）
+- CLIスケルトン（`gig init`, `gig --version`）
 - CI/CD セットアップ（GitHub Actions）
 
 ### M2: 補完スペックパーサー
@@ -57,7 +57,7 @@
 
 - zshにフック（Tab押下で補完候補を表示）
 - bashにフック
-- `fig init` でシェル設定を自動追加
+- `gig init` でシェル設定を自動追加
 
 ### M4: ビルトインスペック
 
@@ -67,6 +67,6 @@
 
 ### M5: インストール/アンインストール
 
-- `fig install` でシェル設定の自動追加
-- `fig uninstall` でシェル設定の自動削除
+- `gig install` でシェル設定の自動追加
+- `gig uninstall` でシェル設定の自動削除
 - 初回セットアップのガイド表示
