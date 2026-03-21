@@ -1,4 +1,5 @@
 mod complete;
+mod installer;
 mod shell;
 mod spec;
 
@@ -62,12 +63,35 @@ fn main() {
             }
         }
         Some(Commands::Install) => {
-            println!("Installing gig...");
-            // TODO: Add hook to shell config
+            let shell_name = detect_shell();
+            match installer::rc_path(shell_name) {
+                Some(rc) => {
+                    match installer::install(&rc, shell_name) {
+                        Ok(true) => println!("Added gig hook to {}", rc.display()),
+                        Ok(false) => println!("gig is already installed in {}", rc.display()),
+                        Err(e) => eprintln!("Failed to install: {}", e),
+                    }
+                    // Copy bundled specs
+                    let bundled = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("specs");
+                    let target = complete::default_specs_dir();
+                    match installer::install_specs(&bundled, &target) {
+                        Ok(n) => println!("Installed {} completion specs to {}", n, target.display()),
+                        Err(e) => eprintln!("Failed to install specs: {}", e),
+                    }
+                }
+                None => eprintln!("Unsupported shell: {}", shell_name),
+            }
         }
         Some(Commands::Uninstall) => {
-            println!("Uninstalling gig...");
-            // TODO: Remove hook from shell config
+            let shell_name = detect_shell();
+            match installer::rc_path(shell_name) {
+                Some(rc) => match installer::uninstall(&rc) {
+                    Ok(true) => println!("Removed gig hook from {}", rc.display()),
+                    Ok(false) => println!("gig is not installed in {}", rc.display()),
+                    Err(e) => eprintln!("Failed to uninstall: {}", e),
+                },
+                None => eprintln!("Unsupported shell: {}", shell_name),
+            }
         }
         None => {
             println!("gig v{}", env!("CARGO_PKG_VERSION"));
