@@ -105,23 +105,17 @@ fn opt_completions(opt: &Opt) -> Vec<Completion> {
 }
 
 fn run_generator(command: &str) -> Vec<Completion> {
-    let output = Command::new("sh")
-        .arg("-c")
-        .arg(command)
-        .output()
-        .ok();
+    let output = Command::new("sh").arg("-c").arg(command).output().ok();
     match output {
-        Some(out) if out.status.success() => {
-            String::from_utf8_lossy(&out.stdout)
-                .lines()
-                .filter(|l| !l.is_empty())
-                .map(|l| Completion {
-                    value: l.trim().to_string(),
-                    description: None,
-                    kind: CompletionKind::Generator,
-                })
-                .collect()
-        }
+        Some(out) if out.status.success() => String::from_utf8_lossy(&out.stdout)
+            .lines()
+            .filter(|l| !l.is_empty())
+            .map(|l| Completion {
+                value: l.trim().to_string(),
+                description: None,
+                kind: CompletionKind::Generator,
+            })
+            .collect(),
         _ => vec![],
     }
 }
