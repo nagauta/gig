@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8](https://github.com/nagauta/gig/compare/v0.1.7...v0.1.8) - 2026-03-26
+
+### Added
+
+- add command generator support and distinct icon for command completions
+- enhance completion system with generator kind support and distinct file icon
+- add support for git checkout subcommand and enhance completion options
+
+### Other
+
+- streamline command output handling in run_generator function
+
 ## [0.1.7](https://github.com/nagauta/gig/compare/v0.1.6...v0.1.7) - 2026-03-26
 
 ### Added
