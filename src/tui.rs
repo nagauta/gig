@@ -19,6 +19,7 @@ const DESC_BG: Color = Color::Rgb(38, 38, 54); // description bar bg
 const ICON_COLOR: Color = Color::Rgb(180, 130, 255); // purple icon
 const BRANCH_ICON_COLOR: Color = Color::Rgb(130, 220, 130); // green branch icon
 const FILE_ICON_COLOR: Color = Color::Rgb(220, 190, 100); // yellow file icon
+const CMD_ICON_COLOR: Color = Color::Rgb(100, 180, 240); // blue command icon
 
 const MAX_VISIBLE: u16 = 8;
 
@@ -268,6 +269,7 @@ fn render_list(f: &mut Frame, app: &App, area: Rect) {
             let (icon, icon_color) = match item.kind {
                 CompletionKind::Branch => (" ᚠ ", BRANCH_ICON_COLOR),
                 CompletionKind::File => (" □ ", FILE_ICON_COLOR),
+                CompletionKind::Command => (" ▶ ", CMD_ICON_COLOR),
                 _ => (" $ ", ICON_COLOR),
             };
             spans.push(Span::styled(icon, Style::default().fg(icon_color).bold()));

@@ -110,6 +110,7 @@ fn run_generator(command: &str, generator_kind: GeneratorKind) -> Vec<Completion
     let kind = match generator_kind {
         GeneratorKind::Branch => CompletionKind::Branch,
         GeneratorKind::File => CompletionKind::File,
+        GeneratorKind::Command => CompletionKind::Command,
     };
     let output = Command::new("sh").arg("-c").arg(command).output().ok();
     match output {
@@ -170,6 +171,7 @@ pub enum CompletionKind {
     Option,
     Branch,
     File,
+    Command,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Clone, Copy, Default)]
@@ -178,6 +180,7 @@ pub enum GeneratorKind {
     #[default]
     Branch,
     File,
+    Command,
 }
 
 #[derive(Debug, PartialEq)]

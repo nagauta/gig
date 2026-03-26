@@ -37,6 +37,8 @@ description = "Ignore peerDependency conflicts"
 [[subcommands]]
 name = "run"
 description = "Run a script defined in package.json"
+generator = "node -e \"try{const p=require('./package.json');Object.keys(p.scripts||{}).forEach(s=>console.log(s))}catch(e){}\""
+generator_kind = "command"
 
 [[subcommands]]
 name = "test"
