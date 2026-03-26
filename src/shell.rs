@@ -38,6 +38,13 @@ _gig_fzf_complete() {{
     local -a args
     args=(${{tokens[2,-1]}})
 
+    # If the line ends with a space, the user finished the current token
+    # and expects completions for the next position. Append an empty arg
+    # so that spec.completions() sees e.g. ["add", ""] instead of ["add"].
+    if [[ "$LBUFFER" == *" " ]]; then
+        args+=("")
+    fi
+
     # Estimate cursor column for dropdown positioning
     # Use LBUFFER length + small offset for prompt (safe fallback)
     local indent=$((${{#LBUFFER}} + 2))
@@ -54,7 +61,7 @@ _gig_fzf_complete() {{
         if (( ${{#tokens}} > 1 )) && [[ "$LBUFFER" != *" " ]]; then
             LBUFFER="${{LBUFFER%$partial}}$selected "
         else
-            LBUFFER="${{LBUFFER}}$selected "
+            LBUFFER="${{LBUFFER% }} $selected "
         fi
         zle reset-prompt
     else

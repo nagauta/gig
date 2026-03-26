@@ -1,11 +1,11 @@
-## 概要
+## Summary
 
-<!-- この PR でなぜ何をするか -->
+<!-- What and why -->
 
-## 変更内容
+## Changes
 
 -
 
-## 備考
+## Notes
 
-<!-- レビュアーに伝えたいことがあれば -->
+<!-- Anything reviewers should know -->
