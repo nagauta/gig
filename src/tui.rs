@@ -274,14 +274,15 @@ fn render_list(f: &mut Frame, app: &App, area: Rect) {
             };
             spans.push(Span::styled(icon, Style::default().fg(icon_color).bold()));
 
-            // Value
+            // Value (use display_name if available, fall back to value)
+            let display_text = item.display_name.as_deref().unwrap_or(&item.value);
             let value_style = if is_selected {
                 Style::default().fg(TEXT_PRIMARY).bold()
             } else {
                 Style::default().fg(TEXT_SECONDARY)
             };
 
-            for (ci, ch) in item.value.chars().enumerate() {
+            for (ci, ch) in display_text.chars().enumerate() {
                 if fi.match_positions.contains(&ci) {
                     spans.push(Span::styled(
                         ch.to_string(),
@@ -350,16 +351,19 @@ mod tests {
         let items = vec![
             Completion {
                 value: "commit".to_string(),
+                display_name: None,
                 description: Some("Record changes".to_string()),
                 kind: CompletionKind::Subcommand,
             },
             Completion {
                 value: "clone".to_string(),
+                display_name: None,
                 description: Some("Clone a repo".to_string()),
                 kind: CompletionKind::Subcommand,
             },
             Completion {
                 value: "push".to_string(),
+                display_name: None,
                 description: None,
                 kind: CompletionKind::Subcommand,
             },
@@ -375,11 +379,13 @@ mod tests {
         let items = vec![
             Completion {
                 value: "a".to_string(),
+                display_name: None,
                 description: None,
                 kind: CompletionKind::Subcommand,
             },
             Completion {
                 value: "b".to_string(),
+                display_name: None,
                 description: None,
                 kind: CompletionKind::Subcommand,
             },

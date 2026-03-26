@@ -60,6 +60,7 @@ impl Spec {
                     .iter()
                     .map(|s| Completion {
                         value: s.name.clone(),
+                        display_name: None,
                         description: s.description.clone(),
                         kind: CompletionKind::Subcommand,
                     })
@@ -87,6 +88,7 @@ impl Spec {
                     .filter(|s| s.name.starts_with(partial))
                     .map(|s| Completion {
                         value: s.name.clone(),
+                        display_name: None,
                         description: s.description.clone(),
                         kind: CompletionKind::Subcommand,
                     })
@@ -125,12 +127,14 @@ impl Spec {
 fn opt_completions(opt: &Opt) -> Vec<Completion> {
     let mut result = vec![Completion {
         value: opt.name.clone(),
+        display_name: None,
         description: opt.description.clone(),
         kind: CompletionKind::Option,
     }];
     if let Some(short) = &opt.short {
         result.push(Completion {
             value: short.clone(),
+            display_name: None,
             description: opt.description.clone(),
             kind: CompletionKind::Option,
         });
@@ -151,6 +155,7 @@ fn run_generator(command: &str, generator_kind: GeneratorKind) -> Vec<Completion
             .filter(|l| !l.is_empty())
             .map(|l| Completion {
                 value: l.trim().to_string(),
+                display_name: None,
                 description: None,
                 kind,
             })
@@ -188,6 +193,7 @@ fn run_template(template: Template, partial: &str) -> (String, Vec<Completion>) 
     if !prefix.is_empty() && filter.is_empty() {
         candidates.push(Completion {
             value: prefix.clone(),
+            display_name: Some("↵".to_string()),
             description: Some("Enter the current directory".to_string()),
             kind: CompletionKind::Command,
         });
@@ -208,8 +214,14 @@ fn run_template(template: Template, partial: &str) -> (String, Vec<Completion>) 
                 let name = entry.file_name().to_string_lossy().to_string();
                 let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
                 let suffix = if is_dir { "/" } else { "" };
+                let display = format!("{}{}", name, suffix);
                 Completion {
                     value: format!("{}{}{}", prefix, name, suffix),
+                    display_name: if prefix.is_empty() {
+                        None
+                    } else {
+                        Some(display)
+                    },
                     description: None,
                     kind: CompletionKind::File,
                 }
@@ -284,6 +296,7 @@ pub enum GeneratorKind {
 #[derive(Debug, PartialEq)]
 pub struct Completion {
     pub value: String,
+    pub display_name: Option<String>,
     pub description: Option<String>,
     pub kind: CompletionKind,
 }
