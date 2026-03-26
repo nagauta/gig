@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use std::path::Path;
+use std::process::Command;
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct Spec {
@@ -25,6 +26,7 @@ pub struct Subcommand {
     pub description: Option<String>,
     #[serde(default)]
     pub options: Vec<Opt>,
+    pub generator: Option<String>,
 }
 
 impl Spec {
@@ -48,6 +50,7 @@ impl Spec {
                     .map(|s| Completion {
                         value: s.name.clone(),
                         description: s.description.clone(),
+                        kind: CompletionKind::Subcommand,
                     })
                     .collect();
                 result.extend(self.options.iter().flat_map(opt_completions));
@@ -62,6 +65,7 @@ impl Spec {
                     .map(|s| Completion {
                         value: s.name.clone(),
                         description: s.description.clone(),
+                        kind: CompletionKind::Subcommand,
                     })
                     .collect();
                 result.extend(
@@ -88,18 +92,70 @@ fn opt_completions(opt: &Opt) -> Vec<Completion> {
     let mut result = vec![Completion {
         value: opt.name.clone(),
         description: opt.description.clone(),
+        kind: CompletionKind::Option,
     }];
     if let Some(short) = &opt.short {
         result.push(Completion {
             value: short.clone(),
             description: opt.description.clone(),
+            kind: CompletionKind::Option,
         });
     }
     result
 }
 
+fn run_generator(command: &str) -> Vec<Completion> {
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg(command)
+        .output()
+        .ok();
+    match output {
+        Some(out) if out.status.success() => {
+            String::from_utf8_lossy(&out.stdout)
+                .lines()
+                .filter(|l| !l.is_empty())
+                .map(|l| Completion {
+                    value: l.trim().to_string(),
+                    description: None,
+                    kind: CompletionKind::Generator,
+                })
+                .collect()
+        }
+        _ => vec![],
+    }
+}
+
 fn sub_completions(sub: &Subcommand, args: &[&str]) -> Vec<Completion> {
     let partial = args.last().copied().unwrap_or("");
+
+    // If the partial input starts with "-", show options
+    if partial.starts_with('-') {
+        return sub
+            .options
+            .iter()
+            .flat_map(opt_completions)
+            .filter(|c| c.value.starts_with(partial))
+            .collect();
+    }
+
+    // Otherwise, try generator for positional arguments
+    if let Some(generator) = &sub.generator {
+        let mut candidates = run_generator(generator);
+        if !partial.is_empty() {
+            candidates.retain(|c| c.value.starts_with(partial));
+        }
+        // Also include options
+        candidates.extend(
+            sub.options
+                .iter()
+                .flat_map(opt_completions)
+                .filter(|c| c.value.starts_with(partial)),
+        );
+        return candidates;
+    }
+
+    // Fallback: show options
     sub.options
         .iter()
         .flat_map(opt_completions)
@@ -107,10 +163,19 @@ fn sub_completions(sub: &Subcommand, args: &[&str]) -> Vec<Completion> {
         .collect()
 }
 
+#[derive(Debug, PartialEq, Clone, Copy, Default)]
+pub enum CompletionKind {
+    #[default]
+    Subcommand,
+    Option,
+    Generator,
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Completion {
     pub value: String,
     pub description: Option<String>,
+    pub kind: CompletionKind,
 }
 
 #[derive(Debug)]
