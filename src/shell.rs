@@ -54,7 +54,7 @@ _gig_fzf_complete() {{
         if (( ${{#tokens}} > 1 )) && [[ "$LBUFFER" != *" " ]]; then
             LBUFFER="${{LBUFFER%$partial}}$selected "
         else
-            LBUFFER="${{LBUFFER}}$selected "
+            LBUFFER="${{LBUFFER% }} $selected "
         fi
         zle reset-prompt
     else

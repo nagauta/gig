@@ -34,6 +34,30 @@ arg = "branch"
 short = "-b"
 
 [[subcommands]]
+name = "add"
+description = "Add file contents to the index"
+
+[[subcommands.options]]
+name = "--all"
+description = "Update the index not only where the working tree has a file matching <pathspec> but also where the index already has an entry"
+short = "-A"
+
+[[subcommands.options]]
+name = "--force"
+description = "Allow adding otherwise ignored files"
+short = "-f"
+
+[[subcommands.options]]
+name = "--dry-run"
+description = "Don't actually add the file(s), just show if they exist"
+short = "-n"
+
+[[subcommands.options]]
+name = "--verbose"
+description = "Be verbose"
+short = "-v"
+
+[[subcommands]]
 name = "commit"
 description = "Record changes to the repository"
 
