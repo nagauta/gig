@@ -27,6 +27,8 @@ pub struct Subcommand {
     #[serde(default)]
     pub options: Vec<Opt>,
     pub generator: Option<String>,
+    #[serde(default)]
+    pub generator_kind: GeneratorKind,
 }
 
 impl Spec {
@@ -104,7 +106,11 @@ fn opt_completions(opt: &Opt) -> Vec<Completion> {
     result
 }
 
-fn run_generator(command: &str) -> Vec<Completion> {
+fn run_generator(command: &str, generator_kind: GeneratorKind) -> Vec<Completion> {
+    let kind = match generator_kind {
+        GeneratorKind::Branch => CompletionKind::Branch,
+        GeneratorKind::File => CompletionKind::File,
+    };
     let output = Command::new("sh").arg("-c").arg(command).output().ok();
     match output {
         Some(out) if out.status.success() => String::from_utf8_lossy(&out.stdout)
@@ -113,7 +119,7 @@ fn run_generator(command: &str) -> Vec<Completion> {
             .map(|l| Completion {
                 value: l.trim().to_string(),
                 description: None,
-                kind: CompletionKind::Generator,
+                kind,
             })
             .collect(),
         _ => vec![],
@@ -135,7 +141,7 @@ fn sub_completions(sub: &Subcommand, args: &[&str]) -> Vec<Completion> {
 
     // Otherwise, try generator for positional arguments
     if let Some(generator) = &sub.generator {
-        let mut candidates = run_generator(generator);
+        let mut candidates = run_generator(generator, sub.generator_kind);
         if !partial.is_empty() {
             candidates.retain(|c| c.value.starts_with(partial));
         }
@@ -162,7 +168,16 @@ pub enum CompletionKind {
     #[default]
     Subcommand,
     Option,
-    Generator,
+    Branch,
+    File,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Clone, Copy, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum GeneratorKind {
+    #[default]
+    Branch,
+    File,
 }
 
 #[derive(Debug, PartialEq)]

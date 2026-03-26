@@ -36,6 +36,8 @@ short = "-b"
 [[subcommands]]
 name = "add"
 description = "Add file contents to the index"
+generator = "git ls-files --modified --others --exclude-standard"
+generator_kind = "file"
 
 [[subcommands.options]]
 name = "--all"
@@ -94,6 +96,7 @@ short = "-u"
 name = "checkout"
 description = "Switch branches or restore working tree files"
 generator = "git branch --format='%(refname:short)'"
+generator_kind = "branch"
 
 [[subcommands.options]]
 name = "--branch"
