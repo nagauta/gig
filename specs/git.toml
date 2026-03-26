@@ -89,3 +89,28 @@ short = "-f"
 name = "--set-upstream"
 description = "Set upstream for the current branch"
 short = "-u"
+
+[[subcommands]]
+name = "checkout"
+description = "Switch branches or restore working tree files"
+generator = "git branch --format='%(refname:short)'"
+
+[[subcommands.options]]
+name = "--branch"
+description = "Create and checkout a new branch"
+arg = "branch"
+short = "-b"
+
+[[subcommands.options]]
+name = "--force"
+description = "Force checkout, throwing away local modifications"
+short = "-f"
+
+[[subcommands.options]]
+name = "--track"
+description = "Set up tracking mode for the new branch"
+short = "-t"
+
+[[subcommands.options]]
+name = "--detach"
+description = "Detach HEAD at the named commit"

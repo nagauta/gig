@@ -6,7 +6,7 @@ use ratatui::prelude::*;
 use ratatui::widgets::*;
 use ratatui::{TerminalOptions, Viewport};
 
-use crate::spec::Completion;
+use crate::spec::{Completion, CompletionKind};
 
 // ── Fig-inspired palette ─────────────────────────────────────────────
 const BG: Color = Color::Rgb(30, 30, 46); // dark card
@@ -17,6 +17,7 @@ const TEXT_DIM: Color = Color::Rgb(120, 120, 140); // dim args/desc
 const BORDER_COLOR: Color = Color::Rgb(55, 55, 75); // subtle border
 const DESC_BG: Color = Color::Rgb(38, 38, 54); // description bar bg
 const ICON_COLOR: Color = Color::Rgb(180, 130, 255); // purple icon
+const BRANCH_ICON_COLOR: Color = Color::Rgb(130, 220, 130); // green branch icon
 
 const MAX_VISIBLE: u16 = 8;
 
@@ -263,7 +264,11 @@ fn render_list(f: &mut Frame, app: &App, area: Rect) {
             spans.push(Span::styled("│", Style::default().fg(BORDER_COLOR)));
 
             // Icon
-            spans.push(Span::styled(" $ ", Style::default().fg(ICON_COLOR).bold()));
+            let (icon, icon_color) = match item.kind {
+                CompletionKind::Generator => (" ᚠ ", BRANCH_ICON_COLOR),
+                _ => (" $ ", ICON_COLOR),
+            };
+            spans.push(Span::styled(icon, Style::default().fg(icon_color).bold()));
 
             // Value
             let value_style = if is_selected {
@@ -342,14 +347,17 @@ mod tests {
             Completion {
                 value: "commit".to_string(),
                 description: Some("Record changes".to_string()),
+                kind: CompletionKind::Subcommand,
             },
             Completion {
                 value: "clone".to_string(),
                 description: Some("Clone a repo".to_string()),
+                kind: CompletionKind::Subcommand,
             },
             Completion {
                 value: "push".to_string(),
                 description: None,
+                kind: CompletionKind::Subcommand,
             },
         ];
         let mut app = App::new(items, 0);
@@ -364,10 +372,12 @@ mod tests {
             Completion {
                 value: "a".to_string(),
                 description: None,
+                kind: CompletionKind::Subcommand,
             },
             Completion {
                 value: "b".to_string(),
                 description: None,
+                kind: CompletionKind::Subcommand,
             },
         ];
         let mut app = App::new(items, 0);
