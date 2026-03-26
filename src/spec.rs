@@ -2,6 +2,13 @@ use serde::Deserialize;
 use std::path::Path;
 use std::process::Command;
 
+#[derive(Debug, Deserialize, PartialEq, Clone, Copy)]
+#[serde(rename_all = "lowercase")]
+pub enum Template {
+    Filepaths,
+    Folders,
+}
+
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct Spec {
     pub name: String,
@@ -10,6 +17,7 @@ pub struct Spec {
     pub options: Vec<Opt>,
     #[serde(default)]
     pub subcommands: Vec<Subcommand>,
+    pub template: Option<Template>,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -29,6 +37,7 @@ pub struct Subcommand {
     pub generator: Option<String>,
     #[serde(default)]
     pub generator_kind: GeneratorKind,
+    pub template: Option<Template>,
 }
 
 impl Spec {
@@ -51,12 +60,25 @@ impl Spec {
                     .iter()
                     .map(|s| Completion {
                         value: s.name.clone(),
+                        display_name: None,
                         description: s.description.clone(),
                         kind: CompletionKind::Subcommand,
                     })
                     .collect();
                 result.extend(self.options.iter().flat_map(opt_completions));
+                if let Some(template) = self.template {
+                    let (_, candidates) = run_template(template, "");
+                    result.extend(candidates);
+                }
                 result
+            }
+            [partial] if partial.starts_with('-') => {
+                // Filter options by prefix
+                self.options
+                    .iter()
+                    .flat_map(opt_completions)
+                    .filter(|c| c.value.starts_with(partial))
+                    .collect()
             }
             [partial] => {
                 // Filter subcommands and options by prefix
@@ -66,6 +88,7 @@ impl Spec {
                     .filter(|s| s.name.starts_with(partial))
                     .map(|s| Completion {
                         value: s.name.clone(),
+                        display_name: None,
                         description: s.description.clone(),
                         kind: CompletionKind::Subcommand,
                     })
@@ -76,12 +99,23 @@ impl Spec {
                         .flat_map(opt_completions)
                         .filter(|c| c.value.starts_with(partial)),
                 );
+                if let Some(template) = self.template {
+                    let (_, candidates) = run_template(template, partial);
+                    result.extend(candidates);
+                }
                 result
             }
             [subcmd, rest @ ..] => {
                 // Delegate to subcommand
                 if let Some(sub) = self.subcommands.iter().find(|s| s.name == *subcmd) {
                     sub_completions(sub, rest)
+                } else if let Some(template) = self.template {
+                    // No matching subcommand, but spec has a template — join all tokens as a path
+                    let mut path_parts: Vec<&str> = vec![subcmd];
+                    path_parts.extend_from_slice(rest);
+                    let combined = path_parts.join("");
+                    let (_, candidates) = run_template(template, &combined);
+                    candidates
                 } else {
                     vec![]
                 }
@@ -93,12 +127,14 @@ impl Spec {
 fn opt_completions(opt: &Opt) -> Vec<Completion> {
     let mut result = vec![Completion {
         value: opt.name.clone(),
+        display_name: None,
         description: opt.description.clone(),
         kind: CompletionKind::Option,
     }];
     if let Some(short) = &opt.short {
         result.push(Completion {
             value: short.clone(),
+            display_name: None,
             description: opt.description.clone(),
             kind: CompletionKind::Option,
         });
@@ -119,12 +155,81 @@ fn run_generator(command: &str, generator_kind: GeneratorKind) -> Vec<Completion
             .filter(|l| !l.is_empty())
             .map(|l| Completion {
                 value: l.trim().to_string(),
+                display_name: None,
                 description: None,
                 kind,
             })
             .collect(),
         _ => vec![],
     }
+}
+
+/// Run a template completion with an optional partial input.
+/// If `partial` contains a `/` (e.g. "src/ma"), the directory part is used
+/// as the base path and results are prefixed with it.
+fn run_template(template: Template, partial: &str) -> (String, Vec<Completion>) {
+    let (dir, filter) = if let Some(pos) = partial.rfind('/') {
+        let dir_part = &partial[..=pos]; // e.g. "src/"
+        let file_part = &partial[pos + 1..]; // e.g. "ma"
+        (dir_part.to_string(), file_part.to_string())
+    } else {
+        (".".to_string(), partial.to_string())
+    };
+
+    let prefix = if dir == "." {
+        String::new()
+    } else {
+        dir.clone()
+    };
+
+    let read_dir = match std::fs::read_dir(&dir) {
+        Ok(rd) => rd,
+        Err(_) => return (filter, vec![]),
+    };
+
+    let mut candidates: Vec<Completion> = Vec::new();
+
+    // When browsing inside a directory, add an entry to confirm the current directory
+    if !prefix.is_empty() && filter.is_empty() {
+        candidates.push(Completion {
+            value: prefix.clone(),
+            display_name: Some("↵".to_string()),
+            description: Some("Enter the current directory".to_string()),
+            kind: CompletionKind::Command,
+        });
+    }
+
+    candidates.extend(
+        read_dir
+            .filter_map(|entry| entry.ok())
+            .filter_map(|entry| {
+                let file_type = entry.file_type().ok()?;
+                match template {
+                    Template::Filepaths => Some(entry),
+                    Template::Folders if file_type.is_dir() => Some(entry),
+                    Template::Folders => None,
+                }
+            })
+            .map(|entry| {
+                let name = entry.file_name().to_string_lossy().to_string();
+                let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
+                let suffix = if is_dir { "/" } else { "" };
+                let display = format!("{}{}", name, suffix);
+                Completion {
+                    value: format!("{}{}{}", prefix, name, suffix),
+                    display_name: if prefix.is_empty() {
+                        None
+                    } else {
+                        Some(display)
+                    },
+                    description: None,
+                    kind: CompletionKind::File,
+                }
+            })
+            .filter(|c| filter.is_empty() || c.value[prefix.len()..].starts_with(&filter)),
+    );
+
+    (filter, candidates)
 }
 
 fn sub_completions(sub: &Subcommand, args: &[&str]) -> Vec<Completion> {
@@ -140,28 +245,33 @@ fn sub_completions(sub: &Subcommand, args: &[&str]) -> Vec<Completion> {
             .collect();
     }
 
-    // Otherwise, try generator for positional arguments
+    let mut candidates = Vec::new();
+
+    // Run generator if present
     if let Some(generator) = &sub.generator {
-        let mut candidates = run_generator(generator, sub.generator_kind);
-        if !partial.is_empty() {
-            candidates.retain(|c| c.value.starts_with(partial));
-        }
-        // Also include options
-        candidates.extend(
-            sub.options
-                .iter()
-                .flat_map(opt_completions)
-                .filter(|c| c.value.starts_with(partial)),
-        );
-        return candidates;
+        candidates.extend(run_generator(generator, sub.generator_kind));
     }
 
-    // Fallback: show options
-    sub.options
-        .iter()
-        .flat_map(opt_completions)
-        .filter(|c| c.value.starts_with(partial))
-        .collect()
+    // Run template if present
+    if let Some(template) = sub.template {
+        let (_, template_candidates) = run_template(template, partial);
+        candidates.extend(template_candidates);
+    }
+
+    // Filter generator results by partial input
+    if !partial.is_empty() {
+        candidates.retain(|c| c.kind == CompletionKind::File || c.value.starts_with(partial));
+    }
+
+    // Also include options
+    candidates.extend(
+        sub.options
+            .iter()
+            .flat_map(opt_completions)
+            .filter(|c| c.value.starts_with(partial)),
+    );
+
+    candidates
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Default)]
@@ -186,6 +296,7 @@ pub enum GeneratorKind {
 #[derive(Debug, PartialEq)]
 pub struct Completion {
     pub value: String,
+    pub display_name: Option<String>,
     pub description: Option<String>,
     pub kind: CompletionKind,
 }
@@ -359,5 +470,175 @@ description = "Amend the previous commit"
         let spec = Spec::from_file(Path::new("specs/git.toml")).unwrap();
         assert_eq!(spec.name, "git");
         assert!(!spec.subcommands.is_empty());
+    }
+
+    #[test]
+    fn parse_template_filepaths() {
+        let spec = Spec::from_toml(
+            r#"
+name = "mycli"
+
+[[subcommands]]
+name = "open"
+description = "Open a file"
+template = "filepaths"
+"#,
+        )
+        .unwrap();
+        assert_eq!(spec.subcommands[0].template, Some(Template::Filepaths));
+    }
+
+    #[test]
+    fn parse_template_folders() {
+        let spec = Spec::from_toml(
+            r#"
+name = "mycli"
+
+[[subcommands]]
+name = "cd"
+description = "Change directory"
+template = "folders"
+"#,
+        )
+        .unwrap();
+        assert_eq!(spec.subcommands[0].template, Some(Template::Folders));
+    }
+
+    #[test]
+    fn parse_no_template() {
+        let spec = Spec::from_toml(FULL_SPEC).unwrap();
+        assert_eq!(spec.subcommands[0].template, None);
+    }
+
+    #[test]
+    fn template_filepaths_returns_files_and_dirs() {
+        let (_, completions) = run_template(Template::Filepaths, "");
+        // We're running from the project root, so Cargo.toml should be present
+        let values: Vec<&str> = completions.iter().map(|c| c.value.as_str()).collect();
+        assert!(values.contains(&"Cargo.toml"));
+        assert!(values.contains(&"src/"));
+        assert!(completions.iter().all(|c| c.kind == CompletionKind::File));
+    }
+
+    #[test]
+    fn template_folders_returns_only_dirs() {
+        let (_, completions) = run_template(Template::Folders, "");
+        let values: Vec<&str> = completions.iter().map(|c| c.value.as_str()).collect();
+        assert!(values.contains(&"src/"));
+        assert!(!values.contains(&"Cargo.toml"));
+    }
+
+    #[test]
+    fn template_folders_have_trailing_slash() {
+        let (_, completions) = run_template(Template::Folders, "");
+        assert!(completions.iter().all(|c| c.value.ends_with('/')));
+    }
+
+    #[test]
+    fn template_subdirectory_traversal() {
+        // Simulates typing "src/" — should list contents of src/
+        let (_, completions) = run_template(Template::Filepaths, "src/");
+        let values: Vec<&str> = completions.iter().map(|c| c.value.as_str()).collect();
+        assert!(values.contains(&"src/main.rs"));
+        assert!(values.contains(&"src/spec.rs"));
+    }
+
+    #[test]
+    fn template_subdirectory_with_partial() {
+        // Simulates typing "src/sp" — should filter within src/
+        let (_, completions) = run_template(Template::Filepaths, "src/sp");
+        let values: Vec<&str> = completions.iter().map(|c| c.value.as_str()).collect();
+        assert!(values.contains(&"src/spec.rs"));
+        assert!(!values.contains(&"src/main.rs"));
+    }
+
+    #[test]
+    fn completions_with_template_filepaths() {
+        let spec = Spec::from_toml(
+            r#"
+name = "mycli"
+
+[[subcommands]]
+name = "open"
+template = "filepaths"
+"#,
+        )
+        .unwrap();
+        let completions = spec.completions(&["open", ""]);
+        let values: Vec<&str> = completions.iter().map(|c| c.value.as_str()).collect();
+        assert!(values.contains(&"Cargo.toml"));
+        assert!(values.contains(&"src/"));
+    }
+
+    #[test]
+    fn completions_with_template_filters_by_partial() {
+        let spec = Spec::from_toml(
+            r#"
+name = "mycli"
+
+[[subcommands]]
+name = "open"
+template = "filepaths"
+"#,
+        )
+        .unwrap();
+        let completions = spec.completions(&["open", "Car"]);
+        let values: Vec<&str> = completions.iter().map(|c| c.value.as_str()).collect();
+        assert!(values.contains(&"Cargo.toml"));
+        assert!(!values.contains(&"src/"));
+    }
+
+    #[test]
+    fn spec_level_template_folders_empty_args() {
+        let spec = Spec::from_toml(
+            r#"
+name = "cd"
+description = "Change directory"
+template = "folders"
+"#,
+        )
+        .unwrap();
+        let completions = spec.completions(&[""]);
+        let values: Vec<&str> = completions.iter().map(|c| c.value.as_str()).collect();
+        assert!(values.contains(&"src/"));
+        assert!(!values.contains(&"Cargo.toml"));
+    }
+
+    #[test]
+    fn spec_level_template_filters_by_partial() {
+        let spec = Spec::from_toml(
+            r#"
+name = "cd"
+template = "folders"
+"#,
+        )
+        .unwrap();
+        let completions = spec.completions(&["sr"]);
+        let values: Vec<&str> = completions.iter().map(|c| c.value.as_str()).collect();
+        assert!(values.contains(&"src/"));
+    }
+
+    #[test]
+    fn spec_level_template_subdirectory() {
+        let spec = Spec::from_toml(
+            r#"
+name = "mycli"
+template = "filepaths"
+"#,
+        )
+        .unwrap();
+        // Simulates: mycli src/ <tab> — "src/" is passed as partial
+        let completions = spec.completions(&["src/"]);
+        let values: Vec<&str> = completions.iter().map(|c| c.value.as_str()).collect();
+        // src/ contains files like main.rs, spec.rs
+        assert!(values.contains(&"src/main.rs"));
+        assert!(values.contains(&"src/spec.rs"));
+    }
+
+    #[test]
+    fn from_file_reads_cd_spec() {
+        let spec = Spec::from_file(Path::new("specs/cd.toml")).unwrap();
+        assert_eq!(spec.name, "cd");
+        assert_eq!(spec.template, Some(Template::Filepaths));
     }
 }
