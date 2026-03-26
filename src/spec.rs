@@ -108,9 +108,11 @@ impl Spec {
                 if let Some(sub) = self.subcommands.iter().find(|s| s.name == *subcmd) {
                     sub_completions(sub, rest)
                 } else if let Some(template) = self.template {
-                    // No matching subcommand, but spec has a template — treat all args as positional
-                    let partial = rest.last().copied().unwrap_or(subcmd);
-                    let (_, candidates) = run_template(template, partial);
+                    // No matching subcommand, but spec has a template — join all tokens as a path
+                    let mut path_parts: Vec<&str> = vec![subcmd];
+                    path_parts.extend_from_slice(rest);
+                    let combined = path_parts.join("");
+                    let (_, candidates) = run_template(template, &combined);
                     candidates
                 } else {
                     vec![]
@@ -180,28 +182,40 @@ fn run_template(template: Template, partial: &str) -> (String, Vec<Completion>) 
         Err(_) => return (filter, vec![]),
     };
 
-    let candidates = read_dir
-        .filter_map(|entry| entry.ok())
-        .filter_map(|entry| {
-            let file_type = entry.file_type().ok()?;
-            match template {
-                Template::Filepaths => Some(entry),
-                Template::Folders if file_type.is_dir() => Some(entry),
-                Template::Folders => None,
-            }
-        })
-        .map(|entry| {
-            let name = entry.file_name().to_string_lossy().to_string();
-            let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
-            let suffix = if is_dir { "/" } else { "" };
-            Completion {
-                value: format!("{}{}{}", prefix, name, suffix),
-                description: None,
-                kind: CompletionKind::File,
-            }
-        })
-        .filter(|c| filter.is_empty() || c.value[prefix.len()..].starts_with(&filter))
-        .collect();
+    let mut candidates: Vec<Completion> = Vec::new();
+
+    // When browsing inside a directory, add an entry to confirm the current directory
+    if !prefix.is_empty() && filter.is_empty() {
+        candidates.push(Completion {
+            value: prefix.clone(),
+            description: Some("Enter the current directory".to_string()),
+            kind: CompletionKind::Command,
+        });
+    }
+
+    candidates.extend(
+        read_dir
+            .filter_map(|entry| entry.ok())
+            .filter_map(|entry| {
+                let file_type = entry.file_type().ok()?;
+                match template {
+                    Template::Filepaths => Some(entry),
+                    Template::Folders if file_type.is_dir() => Some(entry),
+                    Template::Folders => None,
+                }
+            })
+            .map(|entry| {
+                let name = entry.file_name().to_string_lossy().to_string();
+                let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
+                let suffix = if is_dir { "/" } else { "" };
+                Completion {
+                    value: format!("{}{}{}", prefix, name, suffix),
+                    description: None,
+                    kind: CompletionKind::File,
+                }
+            })
+            .filter(|c| filter.is_empty() || c.value[prefix.len()..].starts_with(&filter)),
+    );
 
     (filter, candidates)
 }
@@ -595,22 +609,23 @@ template = "folders"
     fn spec_level_template_subdirectory() {
         let spec = Spec::from_toml(
             r#"
-name = "cd"
-template = "folders"
+name = "mycli"
+template = "filepaths"
 "#,
         )
         .unwrap();
-        // Simulates: cd src/ <tab> — "src/" is passed as partial
+        // Simulates: mycli src/ <tab> — "src/" is passed as partial
         let completions = spec.completions(&["src/"]);
         let values: Vec<&str> = completions.iter().map(|c| c.value.as_str()).collect();
-        // Should not be empty — src/ has subdirectories or at least entries
-        assert!(!completions.is_empty());
+        // src/ contains files like main.rs, spec.rs
+        assert!(values.contains(&"src/main.rs"));
+        assert!(values.contains(&"src/spec.rs"));
     }
 
     #[test]
     fn from_file_reads_cd_spec() {
         let spec = Spec::from_file(Path::new("specs/cd.toml")).unwrap();
         assert_eq!(spec.name, "cd");
-        assert_eq!(spec.template, Some(Template::Folders));
+        assert_eq!(spec.template, Some(Template::Filepaths));
     }
 }

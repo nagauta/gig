@@ -59,9 +59,13 @@ _gig_fzf_complete() {{
         # Remove the partial word being typed
         local partial="${{tokens[-1]}}"
         if (( ${{#tokens}} > 1 )) && [[ "$LBUFFER" != *" " ]]; then
-            LBUFFER="${{LBUFFER%$partial}}$selected "
+            LBUFFER="${{LBUFFER%$partial}}$selected"
         else
-            LBUFFER="${{LBUFFER% }} $selected "
+            LBUFFER="${{LBUFFER% }} $selected"
+        fi
+        # Add trailing space unless selection ends with / (directory)
+        if [[ "$selected" != */ ]]; then
+            LBUFFER+=" "
         fi
         zle reset-prompt
     else
