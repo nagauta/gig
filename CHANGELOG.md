@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.9](https://github.com/nagauta/gig/compare/v0.1.8...v0.1.9) - 2026-03-26
+
+### Added
+
+- add display_name field to Completion struct and update rendering logic in tui.rs
+- add template support for subcommands in spec.rs and introduce cd.toml for directory change command
+
+### Other
+
+- change template from "folders" to "filepaths" in cd.toml and update completion logic in spec.rs
+- add CLAUDE.md for project documentation and command guidance
+
 ## [0.1.8](https://github.com/nagauta/gig/compare/v0.1.7...v0.1.8) - 2026-03-26
 
 ### Added
