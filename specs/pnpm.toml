@@ -1,0 +1,195 @@
+name = "pnpm"
+description = "Fast, disk space efficient package manager"
+
+[[options]]
+name = "--version"
+description = "Print pnpm version"
+short = "-v"
+
+[[options]]
+name = "--help"
+description = "Get help on pnpm"
+short = "-h"
+
+[[subcommands]]
+name = "install"
+description = "Install all dependencies"
+
+[[subcommands.options]]
+name = "--dev"
+description = "Only devDependencies are installed"
+short = "-D"
+
+[[subcommands.options]]
+name = "--prod"
+description = "Only production dependencies are installed"
+short = "-P"
+
+[[subcommands.options]]
+name = "--frozen-lockfile"
+description = "Fail if pnpm-lock.yaml is not up to date"
+
+[[subcommands.options]]
+name = "--no-optional"
+description = "Skip optional dependencies"
+
+[[subcommands]]
+name = "add"
+description = "Install a package and save to dependencies"
+
+[[subcommands.options]]
+name = "--save-dev"
+description = "Save as devDependency"
+short = "-D"
+
+[[subcommands.options]]
+name = "--save-exact"
+description = "Save exact version"
+short = "-E"
+
+[[subcommands.options]]
+name = "--save-optional"
+description = "Save as optionalDependency"
+short = "-O"
+
+[[subcommands.options]]
+name = "--global"
+description = "Install globally"
+short = "-g"
+
+[[subcommands]]
+name = "remove"
+description = "Remove a package from dependencies"
+
+[[subcommands.options]]
+name = "--save-dev"
+description = "Remove from devDependencies"
+short = "-D"
+
+[[subcommands.options]]
+name = "--global"
+description = "Remove global package"
+short = "-g"
+
+[[subcommands]]
+name = "run"
+description = "Run a script defined in package.json"
+generator = "node -e \"try{const p=require('./package.json');Object.keys(p.scripts||{}).forEach(s=>console.log(s))}catch(e){}\""
+generator_kind = "command"
+
+[[subcommands.options]]
+name = "--recursive"
+description = "Run in every project of the workspace"
+short = "-r"
+
+[[subcommands.options]]
+name = "--filter"
+description = "Run only in matching packages"
+arg = "pattern"
+
+[[subcommands]]
+name = "test"
+description = "Run the test script"
+
+[[subcommands]]
+name = "start"
+description = "Run the start script"
+
+[[subcommands]]
+name = "init"
+description = "Create a package.json file"
+
+[[subcommands]]
+name = "publish"
+description = "Publish a package to the registry"
+
+[[subcommands.options]]
+name = "--access"
+description = "Set access level"
+arg = "public|restricted"
+
+[[subcommands.options]]
+name = "--tag"
+description = "Register the package with the given tag"
+arg = "tag"
+
+[[subcommands.options]]
+name = "--no-git-checks"
+description = "Skip git checks"
+
+[[subcommands]]
+name = "update"
+description = "Update packages"
+
+[[subcommands.options]]
+name = "--recursive"
+description = "Update in every project of the workspace"
+short = "-r"
+
+[[subcommands.options]]
+name = "--latest"
+description = "Update to the latest version"
+short = "-L"
+
+[[subcommands.options]]
+name = "--interactive"
+description = "Select packages to update interactively"
+short = "-i"
+
+[[subcommands]]
+name = "outdated"
+description = "Check for outdated packages"
+
+[[subcommands.options]]
+name = "--recursive"
+description = "Check in every project of the workspace"
+short = "-r"
+
+[[subcommands]]
+name = "list"
+description = "List installed packages"
+
+[[subcommands.options]]
+name = "--recursive"
+description = "List in every project of the workspace"
+short = "-r"
+
+[[subcommands.options]]
+name = "--depth"
+description = "Max display depth"
+arg = "depth"
+
+[[subcommands]]
+name = "exec"
+description = "Execute a shell command in the scope of a project"
+
+[[subcommands.options]]
+name = "--recursive"
+description = "Execute in every project of the workspace"
+short = "-r"
+
+[[subcommands.options]]
+name = "--filter"
+description = "Execute only in matching packages"
+arg = "pattern"
+
+[[subcommands]]
+name = "dlx"
+description = "Fetch a package and run a command from it"
+
+[[subcommands]]
+name = "store"
+description = "Manage the pnpm content-addressable store"
+
+[[subcommands]]
+name = "prune"
+description = "Remove extraneous packages from the store"
+
+[[subcommands]]
+name = "why"
+description = "Show all packages that depend on a specified package"
+
+[[subcommands.options]]
+name = "--recursive"
+description = "Check in every project of the workspace"
+short = "-r"
