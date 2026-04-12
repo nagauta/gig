@@ -1,6 +1,6 @@
 [package]
 name = "gig"
-version = "0.1.10"
+version = "0.1.11"
 edition = "2021"
 description = "Terminal autocomplete for any CLI tool"
 license = "MIT"
